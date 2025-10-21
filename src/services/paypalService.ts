@@ -2,7 +2,7 @@ import { Order } from '../types';
 
 const API_BASE_URL = 'https://api-m.sandbox.paypal.com/v1'; // Using sandbox for development
 
-export const connectPaypalAccount = async (): Promise<void> => {
+export const connectPaypalAccount = async (): Promise<string> => {
   const clientId = import.meta.env.VITE_PAYPAL_CLIENT_ID;
   const redirectUri = import.meta.env.VITE_PAYPAL_REDIRECT_URI;
   const scope = 'openid email profile';
@@ -10,7 +10,7 @@ export const connectPaypalAccount = async (): Promise<void> => {
 
   const authUrl = `https://www.sandbox.paypal.com/connect?flowEntry=static&client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}`;
 
-  window.location.href = authUrl;
+  return authUrl;
 };
 
 export const handlePaypalAuthCallback = async (code: string): Promise<void> => {

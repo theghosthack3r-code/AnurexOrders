@@ -2,7 +2,7 @@ import { Order } from '../types';
 
 const API_BASE_URL = 'https://sellingpartnerapi-na.amazon.com'; // North America endpoint
 
-export const connectAmazonAccount = async (): Promise<void> => {
+export const connectAmazonAccount = async (): Promise<string> => {
   const applicationId = import.meta.env.VITE_AMAZON_APPLICATION_ID;
   const redirectUri = import.meta.env.VITE_AMAZON_REDIRECT_URI;
   const version = 'beta'; // or 'v1' for production
@@ -10,7 +10,7 @@ export const connectAmazonAccount = async (): Promise<void> => {
 
   const authUrl = `https://sellercentral.amazon.com/apps/authorize/consent?application_id=${applicationId}&redirect_uri=${redirectUri}&version=${version}&state=${state}`;
 
-  window.location.href = authUrl;
+  return authUrl;
 };
 
 export const handleAmazonAuthCallback = async (code: string): Promise<void> => {

@@ -75,17 +75,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const connectStore = async (store: Store) => {
     try {
       sessionStorage.setItem('connecting_store', store);
+      let authUrl = '';
       switch (store) {
         case Store.Amazon:
-          await connectAmazonAccount();
+          authUrl = await connectAmazonAccount();
           break;
         case Store.Ebay:
-          await connectEbayAccount();
+          authUrl = await connectEbayAccount();
           break;
         case Store.PayPal:
-          await connectPaypalAccount();
+          authUrl = await connectPaypalAccount();
           break;
       }
+      showToast(`Redirecting to: ${authUrl}`);
+      window.location.href = authUrl;
     } catch (error) {
       showToast(`Failed to initiate connection to ${store}.`);
     }

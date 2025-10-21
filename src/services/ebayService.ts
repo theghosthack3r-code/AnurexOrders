@@ -2,7 +2,7 @@ import { Order } from '../types';
 
 const API_BASE_URL = 'https://api.ebay.com/sell/fulfillment/v1';
 
-export const connectEbayAccount = async (): Promise<void> => {
+export const connectEbayAccount = async (): Promise<string> => {
   const clientId = import.meta.env.VITE_EBAY_CLIENT_ID;
   const redirectUri = import.meta.env.VITE_EBAY_REDIRECT_URI;
   const scope = 'https://api.ebay.com/oauth/api_scope/sell.fulfillment';
@@ -11,7 +11,7 @@ export const connectEbayAccount = async (): Promise<void> => {
 
   const authUrl = `https://auth.ebay.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}&prompt=${prompt}`;
 
-  window.location.href = authUrl;
+  return authUrl;
 };
 
 export const handleEbayAuthCallback = async (code: string): Promise<void> => {
