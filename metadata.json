@@ -1,0 +1,5 @@
+{
+  "name": "Anurex Order Hub",
+  "description": "A centralized dashboard to manage and ship online orders from multiple storefronts, replacing manual checks on stamps.com. Features include order aggregation, simulated shipping label generation, and AI-powered customer communication.",
+  "requestFramePermissions": []
+}
