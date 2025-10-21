@@ -1,6 +1,10 @@
 import React, { createContext, useState, useContext, useMemo } from 'react';
 import { MOCK_ORDERS } from '../constants';
 import { OrderStatus, type Order, Store, View } from '../types';
+import { connectAmazonAccount, getAmazonOrders, handleAmazonAuthCallback } from '../src/services/amazonService';
+import { connectEbayAccount, getEbayOrders, handleEbayAuthCallback } from '../src/services/ebayService';
+import { connectPaypalAccount, getPaypalOrders, handlePaypalAuthCallback } from '../src/services/paypalService';
+import { sendEmailNotification, sendSmsNotification } from '../src/services/notificationService';
 
 interface AppContextType {
   orders: Order[];
@@ -23,14 +27,22 @@ interface AppContextType {
 
   // Settings
   connections: Record<Store, boolean>;
-  toggleConnection: (store: Store) => void;
+  connectStore: (store: Store) => Promise<void>;
+  disconnectStore: (store: Store) => void;
   syncOrders: () => Promise<void>;
+  handleAuthCallback: () => Promise<void>;
 
   // Dashboard filters
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   storeFilter: Store | 'All';
   setStoreFilter: (store: Store | 'All') => void;
+
+  // Settings
+  email: string;
+  setEmail: (email: string) => void;
+  phone: string;
+  setPhone: (phone: string) => void;
 
   // Toast
   toastMessage: string | null;
@@ -57,19 +69,88 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [searchQuery, setSearchQuery] = useState('');
   const [storeFilter, setStoreFilter] = useState<Store | 'All'>('All');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [email, setEmail] = useState('your-business-email@example.com');
+  const [phone, setPhone] = useState('+15551234567');
 
-  const toggleConnection = (store: Store) => {
-    setConnections(prev => ({ ...prev, [store]: !prev[store] }));
+  const connectStore = async (store: Store) => {
+    try {
+      sessionStorage.setItem('connecting_store', store);
+      switch (store) {
+        case Store.Amazon:
+          await connectAmazonAccount();
+          break;
+        case Store.Ebay:
+          await connectEbayAccount();
+          break;
+        case Store.PayPal:
+          await connectPaypalAccount();
+          break;
+      }
+    } catch (error) {
+      showToast(`Failed to initiate connection to ${store}.`);
+    }
+  };
+
+  const disconnectStore = (store: Store) => {
+    setConnections(prev => ({ ...prev, [store]: false }));
+    localStorage.removeItem(`${store.toLowerCase()}_access_token`);
+    showToast(`${store} disconnected successfully.`);
+  };
+
+  const handleAuthCallback = async () => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const connectingStore = sessionStorage.getItem('connecting_store') as Store;
+
+    if (code && connectingStore) {
+      try {
+        switch (connectingStore) {
+          case Store.Amazon:
+            await handleAmazonAuthCallback(code);
+            break;
+          case Store.Ebay:
+            await handleEbayAuthCallback(code);
+            break;
+          case Store.PayPal:
+            await handlePaypalAuthCallback(code);
+            break;
+        }
+        setConnections(prev => ({ ...prev, [connectingStore]: true }));
+        showToast(`${connectingStore} connected successfully!`);
+      } catch (error) {
+        showToast(`Failed to connect ${connectingStore}.`);
+      } finally {
+        sessionStorage.removeItem('connecting_store');
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
   };
   
-  const syncOrders = () => {
-    return new Promise<void>(resolve => {
-        setTimeout(() => {
-            setOrders(MOCK_ORDERS);
-            showToast('Orders Synced Successfully!');
-            resolve();
-        }, 1000);
-    });
+  const syncOrders = async () => {
+    const newOrders: Order[] = [];
+    if (connections[Store.Amazon]) {
+      const amazonOrders = await getAmazonOrders();
+      newOrders.push(...amazonOrders);
+    }
+    if (connections[Store.Ebay]) {
+      const ebayOrders = await getEbayOrders();
+      newOrders.push(...ebayOrders);
+    }
+    if (connections[Store.PayPal]) {
+      const paypalOrders = await getPaypalOrders();
+      newOrders.push(...paypalOrders);
+    }
+
+    if (newOrders.length > 0) {
+      for (const order of newOrders) {
+        sendEmailNotification(order, email);
+        sendSmsNotification(order, phone);
+      }
+    }
+
+    setOrders(prevOrders => [...prevOrders, ...newOrders]);
+    showToast('Orders Synced Successfully!');
   };
 
   const initiateShipping = (order: Order) => {
@@ -150,15 +231,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     cancelShipping,
     createLabel,
     connections,
-    toggleConnection,
+    connectStore,
+    disconnectStore,
     syncOrders,
+    handleAuthCallback,
     searchQuery,
     setSearchQuery,
     storeFilter,
     setStoreFilter,
     toastMessage,
     showToast,
-    hideToast
+    hideToast,
+    email,
+    setEmail,
+    phone,
+    setPhone
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

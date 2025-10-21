@@ -5,12 +5,10 @@ import Spinner from './Spinner';
 import { useAppContext } from '../contexts/AppContext';
 
 const Settings: React.FC = () => {
-  const { connections, toggleConnection, syncOrders } = useAppContext();
+  const { connections, connectStore, syncOrders, email, setEmail, phone, setPhone } = useAppContext();
 
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [smsNotifications, setSmsNotifications] = useState(false);
-  const [email, setEmail] = useState('your-business-email@example.com');
-  const [phone, setPhone] = useState('+15551234567');
   const [isSyncing, setIsSyncing] = useState(false);
 
   const STORES_TO_CONNECT: Store[] = [Store.Amazon, Store.Ebay, Store.PayPal];
@@ -58,13 +56,21 @@ const Settings: React.FC = () => {
                                 </span>
                             </div>
                             <button
-                                onClick={() => toggleConnection(store)}
-                                className={`font-bold py-2 px-4 rounded-lg text-sm transition-colors duration-200 border ${
-                                    isConnected ? 'border-signature-red text-signature-red hover:bg-signature-red hover:text-white' : 'border-seafoam text-seafoam hover:bg-seafoam hover:text-white'
-                                }`}
-                            >
-                                {isConnected ? 'Disconnect' : 'Connect'}
-                            </button>
+                            {isConnected ? (
+                                <button
+                                    onClick={() => disconnectStore(store)}
+                                    className="font-bold py-2 px-4 rounded-lg text-sm transition-colors duration-200 border border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                                >
+                                    Disconnect
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => connectStore(store)}
+                                    className="font-bold py-2 px-4 rounded-lg text-sm transition-colors duration-200 border border-seafoam text-seafoam hover:bg-seafoam hover:text-white"
+                                >
+                                    Connect
+                                </button>
+                            )}
                         </div>
                     </div>
                 )

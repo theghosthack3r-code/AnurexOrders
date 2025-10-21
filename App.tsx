@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAppContext } from './contexts/AppContext';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -12,16 +12,21 @@ import ConfirmationEmailModal from './components/ConfirmationEmailModal';
 import Toast from './components/Toast';
 
 const App: React.FC = () => {
-  const { 
-    activeView, 
-    activeOrder, 
-    isLabelModalOpen, 
-    closeLabelModal, 
-    isConfirmationModalOpen, 
+  const {
+    activeView,
+    activeOrder,
+    isLabelModalOpen,
+    closeLabelModal,
+    isConfirmationModalOpen,
     closeConfirmationModal,
     toastMessage,
-    hideToast
+    hideToast,
+    handleAuthCallback,
   } = useAppContext();
+
+  useEffect(() => {
+    handleAuthCallback();
+  }, [handleAuthCallback]);
 
   const renderView = () => {
     switch (activeView) {
